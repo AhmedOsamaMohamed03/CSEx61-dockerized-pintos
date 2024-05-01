@@ -88,6 +88,37 @@ bool sort_priority(const struct list_elem *a, const struct list_elem *b, void *a
 
    It is not safe to call thread_current() until this function
    finishes. */
+static bool thread_max_priority(const struct list_elem *a,
+                                const struct list_elem *b,
+                                void *aux UNUSED);
+
+static bool locks_max_priority(const struct list_elem *a,
+                               const struct list_elem *b,
+                               void *aux UNUSED);
+
+static bool
+thread_max_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
+  ASSERT(a != NULL);
+  ASSERT(b != NULL);
+
+  const struct thread *t1 = list_entry(a, struct thread, elem);
+  const struct thread *t2 = list_entry(b, struct thread, elem);
+
+  return t1->effictivePri > t2->effictivePri;
+}
+
+static bool
+locks_max_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
+{
+  ASSERT(a != NULL);
+  ASSERT(b != NULL);
+
+  const struct lock *l1 = list_entry(a, struct lock, elem);
+  const struct lock *l2 = list_entry(b, struct lock, elem);
+  return l1->largestPri > l2->largestPri;
+}
+
 void thread_init(void)
 {
   ASSERT(intr_get_level() == INTR_OFF);
@@ -212,7 +243,7 @@ tid_t thread_create(const char *name, int priority,
     // calculate_priority_threads();
     // intr_enable();
   }
-  if (t->priority > thread_current()->priority)
+  if (priority > thread_current()->effictivePri)
   {
     thread_yield();
   }
