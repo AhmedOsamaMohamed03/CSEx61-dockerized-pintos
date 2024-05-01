@@ -360,7 +360,7 @@ void thread_yield(void)
   old_level = intr_disable();
   if (cur != idle_thread)
     // modified by Hager Melook
-    list_insert_ordered(&ready_list, &cur->elem, sort_priority, NULL);
+    list_insert_ordered(&ready_list, &cur->elem, thread_max_priority, NULL);
   // list_push_back(&ready_list, &cur->elem);
   cur->status = THREAD_READY;
   schedule();
