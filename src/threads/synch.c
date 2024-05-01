@@ -228,9 +228,10 @@ sema_test_helper(void *sema_)
 void lock_init(struct lock *lock)
 {
   ASSERT(lock != NULL);
-  // lock->largestPri = 0;
+
   lock->holder = NULL;
   sema_init(&lock->semaphore, 1);
+  lock->largestPri = -1;
 }
 
 /* Acquires LOCK, sleeping until it becomes available if
@@ -247,30 +248,10 @@ void lock_acquire(struct lock *lock)
   ASSERT(!intr_context());
   ASSERT(!lock_held_by_current_thread(lock));
 
-  // thread_current()->waitingOn = lock;
-  // if (thread_current()->effictivePri > lock->largestPri)
-  // {
-  //   struct lock *currentLock = lock;
-  //   while (currentLock != NULL)
-  //   {
-  //     if (thread_current()->effictivePri > currentLock->largestPri)
-  //     {
-  //       currentLock->largestPri = thread_current()->effictivePri;
-  //       currentLock->holder->effictivePri = thread_current()->effictivePri;
-  //     }
-  //     currentLock = &currentLock->holder->waitingOn;
-  //   }
-  // }
-
   sema_down(&lock->semaphore);
   // thread_current()->waitingOn = NULL;
   lock->holder = thread_current();
   // lock->largestPri = thread_current()->effictivePri;
-  // list_insert_ordered(&thread_current()->locks, &lock->elem, locks_max_priority, NULL);
-
-  // struct list_elem *e = list_pop_back(&thread_current()->locks);
-  // struct lock *a = list_entry(e, struct lock, elem);
-  // printf("\n%d\n", a->largestPri);
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
