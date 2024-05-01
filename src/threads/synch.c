@@ -305,9 +305,40 @@ void lock_release(struct lock *lock)
 {
   ASSERT(lock != NULL);
   ASSERT(lock_held_by_current_thread(lock));
+  enum intr_level old_level;
+  old_level = intr_disable();
 
   lock->holder = NULL;
+
+  if (!thread_mlfqs)
+  {
+    struct thread *th = thread_current();
+    list_remove(&lock->elem);
+    /* we should here inherit the lock priority if there are another locks */
+    // list_sort(&th->locks, locks_max_priority, NULL);
+    if (!list_empty(&th->locks))
+    {
+      /* Get the next lock priority */
+      struct lock *next_lock = list_entry(list_front(&th->locks), struct lock, elem);
+      // if (next_lock->largestPri != -1)
+      // {
+      // if (next_lock->largestPri > th->effictivePri)
+      // {
+      th->effictivePri = next_lock->largestPri;
+      // }
+      // }
+      // else
+      // {
+      //   th->effictivePri = next_lock->largestPri;
+      // }
+    }
+    else
+    {
+      th->effictivePri = th->priority;
+    }
+  }
   sema_up(&lock->semaphore);
+  intr_set_level(old_level);
 }
 
 /* Returns true if the current thread holds LOCK, false
