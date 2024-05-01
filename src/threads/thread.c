@@ -291,7 +291,7 @@ void thread_unblock(struct thread *t)
     calculate_recent_cpu(t, NULL);
     calculate_priority(t, NULL);
   }
-  list_insert_ordered(&ready_list, &t->elem, sort_priority, NULL);
+  list_insert_ordered(&ready_list, &t->elem, thread_max_priority, NULL);
   t->status = THREAD_READY;
   intr_set_level(old_level);
 }
