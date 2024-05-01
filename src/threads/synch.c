@@ -90,7 +90,6 @@ void sema_init(struct semaphore *sema, unsigned value)
    thread will probably turn interrupts back on. */
 void sema_down(struct semaphore *sema)
 {
-  printf("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
   enum intr_level old_level;
 
   ASSERT(sema != NULL);
@@ -100,13 +99,11 @@ void sema_down(struct semaphore *sema)
   // printf("%d\n", sema->value);
   while (sema->value == 0)
   {
-    printf("cccccccccccccccccccccccccccccccccccccc\n");
     list_push_back(&sema->waiters, &thread_current()->elem);
     thread_block();
   }
   sema->value--;
   intr_set_level(old_level);
-  printf("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
 }
 
 /* Down or "P" operation on a semaphore, but only if the
@@ -221,7 +218,6 @@ void lock_init(struct lock *lock)
    we need to sleep. */
 void lock_acquire(struct lock *lock)
 {
-  printf("acccccccccccqqqqqqqqqqqqqqqqqqquire");
   ASSERT(lock != NULL);
   ASSERT(!intr_context());
   ASSERT(!lock_held_by_current_thread(lock));
@@ -289,7 +285,6 @@ void lock_release(struct lock *lock)
 
   lock->holder = NULL;
   sema_up(&lock->semaphore);
-  printf("\nPPPPPPPPPPPPPPPPPAAAAAAAAAAAAAASSSSSSSSSSSTTTTTTTTRELEAAASE\n");
 }
 
 /* Returns true if the current thread holds LOCK, false
