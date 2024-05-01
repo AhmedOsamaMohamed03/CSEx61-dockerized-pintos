@@ -437,12 +437,19 @@ void thread_set_priority(int new_priority)
 {
   if (thread_mlfqs)
     return;
+  else
+  {
+    if (thread_current()->priority == thread_current()->effictivePri)
+      thread_current()->effictivePri = new_priority;
+    thread_current()->priority = new_priority;
+    thread_yield();
+  }
 }
 
 /* Returns the current thread's priority. */
 int thread_get_priority(void)
 {
-  return thread_current()->priority;
+  return thread_current()->effictivePri;
 }
 
 /* Sets the current thread's nice value to NICE. */
