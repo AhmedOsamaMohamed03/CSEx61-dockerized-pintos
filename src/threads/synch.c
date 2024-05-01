@@ -248,10 +248,33 @@ void lock_acquire(struct lock *lock)
   ASSERT(!intr_context());
   ASSERT(!lock_held_by_current_thread(lock));
 
+  enum intr_level old_level;
+  old_level = intr_disable();
+
+  thread_current()->waitingOn = lock;
+  struct lock *currentLock = lock;
+  struct thread *lockHolder = lock->holder;
+  while (lockHolder != NULL && thread_current()->effictivePri > lockHolder->effictivePri && !thread_mlfqs)
+  {
+    lockHolder->effictivePri = thread_current()->effictivePri;
+    currentLock->largestPri = lockHolder->effictivePri;
+    currentLock = lockHolder->waitingOn;
+    if (currentLock == NULL)
+    {
+      break;
+    }
+    lockHolder = currentLock->holder;
+  }
   sema_down(&lock->semaphore);
-  // thread_current()->waitingOn = NULL;
-  lock->holder = thread_current();
-  // lock->largestPri = thread_current()->effictivePri;
+  lock->holder = thread_current(); // TEST
+  if (!thread_mlfqs)
+  {
+    thread_current()->waitingOn = NULL;
+    lock->largestPri = thread_current()->effictivePri;
+    list_insert_ordered(&thread_current()->locks, &lock->elem, locks_max_priority, NULL);
+  }
+
+  intr_set_level(old_level);
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -282,12 +305,6 @@ void lock_release(struct lock *lock)
 {
   ASSERT(lock != NULL);
   ASSERT(lock_held_by_current_thread(lock));
-
-  // list_remove(&lock->elem);
-  // thread_current()->effictivePri = thread_current()->priority;
-  // thread_current()->effictivePri = thread_current()->priority;
-  // struct list_elem *a;
-  // for (a = list_begin(&thread_current()->locks);
 
   lock->holder = NULL;
   sema_up(&lock->semaphore);
