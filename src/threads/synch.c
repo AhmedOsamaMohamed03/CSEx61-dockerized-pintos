@@ -45,6 +45,14 @@ static bool thread_max_priority(const struct list_elem *a,
                                 const struct list_elem *b,
                                 void *aux UNUSED);
 
+static bool locks_max_priority(const struct list_elem *a,
+                               const struct list_elem *b,
+                               void *aux UNUSED);
+
+static bool sema_max_priority(const struct list_elem *a,
+                              const struct list_elem *b,
+                              void *aux UNUSED);
+
 static bool
 thread_max_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
 {
@@ -54,12 +62,8 @@ thread_max_priority(const struct list_elem *a, const struct list_elem *b, void *
   const struct thread *t1 = list_entry(a, struct thread, elem);
   const struct thread *t2 = list_entry(b, struct thread, elem);
 
-  return t1->priority > t2->priority;
+  return t1->effictivePri > t2->effictivePri;
 }
-
-static bool locks_max_priority(const struct list_elem *a,
-                               const struct list_elem *b,
-                               void *aux UNUSED);
 
 static bool
 locks_max_priority(const struct list_elem *a, const struct list_elem *b, void *aux UNUSED)
@@ -69,7 +73,6 @@ locks_max_priority(const struct list_elem *a, const struct list_elem *b, void *a
 
   const struct lock *l1 = list_entry(a, struct lock, elem);
   const struct lock *l2 = list_entry(b, struct lock, elem);
-
   return l1->largestPri > l2->largestPri;
 }
 
@@ -90,16 +93,16 @@ void sema_init(struct semaphore *sema, unsigned value)
    thread will probably turn interrupts back on. */
 void sema_down(struct semaphore *sema)
 {
+  // printf("Enter sema with %s\n", thread_current()->name);
   enum intr_level old_level;
-
   ASSERT(sema != NULL);
   ASSERT(!intr_context());
-
   old_level = intr_disable();
-  // printf("%d\n", sema->value);
+
   while (sema->value == 0)
   {
-    list_push_back(&sema->waiters, &thread_current()->elem);
+    // printf("thread %s blocked with priority %d\n", thread_current()->name, thread_current()->effictivePri);
+    list_insert_ordered(&sema->waiters, &thread_current()->elem, thread_max_priority, NULL);
     thread_block();
   }
   sema->value--;
